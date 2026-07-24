@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dns from 'dns';
+import { autoSeedInitialRoles } from '../utils/autoSeed.js';
 
 // Force IPv4 & Google DNS to resolve MongoDB Atlas SRV connection strings
 dns.setDefaultResultOrder('ipv4first');
@@ -13,6 +14,8 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    // Auto-seed hardcoded role accounts on DB connection
+    await autoSeedInitialRoles();
   } catch (error) {
     console.error(`MongoDB Connection Error: ${error.message}`);
     process.exit(1);
