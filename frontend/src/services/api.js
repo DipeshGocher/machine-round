@@ -15,7 +15,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 25000 // Increased timeout for cold-starting free tier hosts like Render
+  timeout: 25000 // Increased timeout for cold-starting free tier hosts
 });
 
 // Request Interceptor (Attaching JWT token)
@@ -32,7 +32,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor (Global Error Handling)
+// Response Interceptor (Global Error Handling & Session Expiry Cleanup)
 api.interceptors.response.use(
   (response) => {
     return response.data;
@@ -41,7 +41,10 @@ api.interceptors.response.use(
     const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
     
     if (error.response?.status === 401) {
-      showToast.error('Session expired or unauthorized. Please login.');
+      // Clear invalid/expired session data from browser storage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      showToast.error('Session expired or invalid token. Please log in again.');
     } else {
       showToast.error(message);
     }
