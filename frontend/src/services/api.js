@@ -38,15 +38,16 @@ api.interceptors.response.use(
     return response.data;
   },
   (error) => {
-    const message = error.response?.data?.message || error.message || 'An unexpected error occurred';
-    
-    if (error.response?.status === 401) {
-      // Clear invalid/expired session data from browser storage
+    const serverMessage = error.response?.data?.message;
+    const status = error.response?.status;
+
+    if (status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      showToast.error('Session expired or invalid token. Please log in again.');
+      // Show actual backend message (e.g. "Invalid credentials") if provided
+      showToast.error(serverMessage || 'Session expired or invalid token. Please log in again.');
     } else {
-      showToast.error(message);
+      showToast.error(serverMessage || error.message || 'An unexpected error occurred');
     }
 
     return Promise.reject(error);
