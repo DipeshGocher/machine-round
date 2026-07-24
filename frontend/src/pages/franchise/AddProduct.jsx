@@ -1,0 +1,217 @@
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { addProduct } from '../../services/franchiseOwnerService.js';
+import { showToast } from '../../utils/toast.js';
+import { validateUrl } from '../../utils/validators.js';
+import { ArrowLeft, PlusCircle, Utensils } from 'lucide-react';
+
+const AddProduct = () => {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'Pizza',
+    price: '',
+    description: '',
+    imageUrl: '',
+    availability: true
+  });
+
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Product name is required';
+    } else if (formData.name.trim().length < 2 || formData.name.trim().length > 100) {
+      newErrors.name = 'Product name must be between 2 and 100 characters';
+    }
+
+    const validCategories = ['Pizza', 'Burger', 'Beverages', 'Dessert', 'Other'];
+    if (!formData.category || !validCategories.includes(formData.category)) {
+      newErrors.category = 'Select a valid category';
+    }
+
+    const priceNum = Number(formData.price);
+    if (!formData.price || isNaN(priceNum) || priceNum <= 0) {
+      newErrors.price = 'Price must be a positive number greater than zero';
+    }
+
+    if (formData.description && formData.description.length > 500) {
+      newErrors.description = 'Description cannot exceed 500 characters';
+    }
+
+    if (formData.imageUrl && !validateUrl(formData.imageUrl)) {
+      newErrors.imageUrl = 'Enter a valid image URL';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+      const res = await addProduct(formData);
+      if (res?.success) {
+        showToast.success('Product added to franchise catalog!');
+        navigate('/franchise/products');
+      }
+    } catch (err) {
+      const serverMessage = err.response?.data?.message || 'Failed to add product';
+      showToast.error(serverMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <Link to="/franchise/products" className="btn btn-secondary btn-sm flex-center gap-1" style={{ width: 'fit-content', marginBottom: '1rem' }}>
+          <ArrowLeft size={16} />
+          <span>Back to Products Catalog</span>
+        </Link>
+        <h2>Add New Product</h2>
+        <p>Add a new item to your franchise menu</p>
+      </div>
+
+      <div className="card">
+        <form onSubmit={handleSubmit}>
+          {/* Product Name */}
+          <div className="form-group">
+            <label className="form-label">Product Name</label>
+            <input
+              type="text"
+              name="name"
+              className="form-input"
+              placeholder="e.g. Cheese Burst Pepperoni Pizza"
+              value={formData.name}
+              onChange={handleChange}
+              disabled={loading}
+            />
+            {errors.name && <div className="form-error">{errors.name}</div>}
+          </div>
+
+          <div className="grid grid-cols-2">
+            {/* Category */}
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select
+                name="category"
+                className="form-select"
+                value={formData.category}
+                onChange={handleChange}
+                disabled={loading}
+              >
+                <option value="Pizza">Pizza</option>
+                <option value="Burger">Burger</option>
+                <option value="Beverages">Beverages</option>
+                <option value="Dessert">Dessert</option>
+                <option value="Other">Other</option>
+              </select>
+              {errors.category && <div className="form-error">{errors.category}</div>}
+            </div>
+
+            {/* Price */}
+            <div className="form-group">
+              <label className="form-label">Price ($ USD)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                name="price"
+                className="form-input"
+                placeholder="e.g. 14.99"
+                value={formData.price}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              {errors.price && <div className="form-error">{errors.price}</div>}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="form-group">
+            <label className="form-label">Description (Optional)</label>
+            <textarea
+              name="description"
+              className="form-input"
+              rows="3"
+              placeholder="Brief description of ingredients, taste, or portion size..."
+              value={formData.description}
+              onChange={handleChange}
+              disabled={loading}
+            />
+            {errors.description && <div className="form-error">{errors.description}</div>}
+          </div>
+
+          {/* Image URL */}
+          <div className="form-group">
+            <label className="form-label">Image URL (Optional)</label>
+            <input
+              type="url"
+              name="imageUrl"
+              className="form-input"
+              placeholder="https://example.com/images/pizza.jpg"
+              value={formData.imageUrl}
+              onChange={handleChange}
+              disabled={loading}
+            />
+            {errors.imageUrl && <div className="form-error">{errors.imageUrl}</div>}
+          </div>
+
+          {/* Availability Checkbox */}
+          <div className="form-group" style={{ marginTop: '1rem' }}>
+            <label className="flex-center gap-2" style={{ justifyContent: 'flex-start', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                name="availability"
+                checked={formData.availability}
+                onChange={handleChange}
+                disabled={loading}
+                style={{ width: '18px', height: '18px' }}
+              />
+              <span style={{ fontWeight: 500 }}>Make product available for ordering immediately</span>
+            </label>
+          </div>
+
+          <div className="flex-between" style={{ marginTop: '2rem' }}>
+            <Link to="/franchise/products" className="btn btn-secondary">
+              Cancel
+            </Link>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? (
+                <span>Adding Product...</span>
+              ) : (
+                <>
+                  <PlusCircle size={18} />
+                  <span>Add Product</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default AddProduct;
