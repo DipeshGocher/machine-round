@@ -1,6 +1,14 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import dns from 'dns';
 import app from '../backend/app.js';
+import { autoSeedInitialRoles } from '../backend/src/utils/autoSeed.js';
+
+// Resolve IPv4 & Google DNS for Vercel Serverless environment
+dns.setDefaultResultOrder('ipv4first');
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {}
 
 dotenv.config({ path: './backend/.env' });
 
@@ -13,9 +21,12 @@ const connectDB = async () => {
     return;
   }
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI, {
+      bufferCommands: false
+    });
     isConnected = true;
-    console.log('Serverless MongoDB connected successfully');
+    console.log('Serverless MongoDB connected successfully to mern_db');
+    await autoSeedInitialRoles();
   } catch (err) {
     console.error('Serverless MongoDB connection error:', err);
   }
