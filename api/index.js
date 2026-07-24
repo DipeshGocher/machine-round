@@ -4,7 +4,7 @@ import app from '../backend/app.js';
 
 dotenv.config({ path: './backend/.env' });
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dipeshgurjer000_db_user:JUIEo092fHiI47Zw@cluster0.aube9xz.mongodb.net/?appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dipeshgurjer000_db_user:JUIEo092fHiI47Zw@cluster0.aube9xz.mongodb.net/mern_db?appName=Cluster0';
 
 let isConnected = false;
 
