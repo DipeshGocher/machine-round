@@ -13,16 +13,17 @@ export const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'Email and password are required');
   }
 
-  const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
   if (!user) {
-    throw new ApiError(HTTP_STATUS.UNAUTHORIZED, 'Invalid credentials');
+    throw new ApiError(HTTP_STATUS.UNAUTHORIZED, `No account found with email "${normalizedEmail}"`);
   }
 
   // Check password
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
-    throw new ApiError(HTTP_STATUS.UNAUTHORIZED, 'Invalid credentials');
+    throw new ApiError(HTTP_STATUS.UNAUTHORIZED, 'Incorrect password. Password is case-sensitive.');
   }
 
   // Check user status
