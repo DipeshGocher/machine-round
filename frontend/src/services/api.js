@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { showToast } from '../utils/toast.js';
 
-let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 rawBaseUrl = rawBaseUrl.trim().replace(/\/+$/, '');
 
-// Ensure /api suffix is attached if missing on remote host URLs
+// Smart URL resolution: Local dev targets http://localhost:5000/api; Production Vercel targets /api
 let API_BASE_URL = rawBaseUrl;
-if (rawBaseUrl.startsWith('http') && !rawBaseUrl.endsWith('/api')) {
+if (import.meta.env.DEV && (rawBaseUrl === '/api' || rawBaseUrl.startsWith('/'))) {
+  API_BASE_URL = 'http://localhost:5000/api';
+} else if (rawBaseUrl.startsWith('http') && !rawBaseUrl.endsWith('/api')) {
   API_BASE_URL = `${rawBaseUrl}/api`;
 }
 
@@ -15,7 +17,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 25000 // Increased timeout for cold-starting free tier hosts
+  timeout: 25000
 });
 
 // Request Interceptor (Attaching JWT token)
@@ -44,7 +46,6 @@ api.interceptors.response.use(
     if (status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Show actual backend message (e.g. "Invalid credentials") if provided
       showToast.error(serverMessage || 'Session expired or invalid token. Please log in again.');
     } else {
       showToast.error(serverMessage || error.message || 'An unexpected error occurred');
