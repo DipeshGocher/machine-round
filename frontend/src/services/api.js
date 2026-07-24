@@ -1,14 +1,21 @@
 import axios from 'axios';
 import { showToast } from '../utils/toast.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+let rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+rawBaseUrl = rawBaseUrl.trim().replace(/\/+$/, '');
+
+// Ensure /api suffix is attached if missing on remote host URLs
+let API_BASE_URL = rawBaseUrl;
+if (rawBaseUrl.startsWith('http') && !rawBaseUrl.endsWith('/api')) {
+  API_BASE_URL = `${rawBaseUrl}/api`;
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 10000
+  timeout: 25000 // Increased timeout for cold-starting free tier hosts like Render
 });
 
 // Request Interceptor (Attaching JWT token)
